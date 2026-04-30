@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TaskFlow</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: #0a0a0a;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+    color: #e0e0e0;
+    touch-action: pan-y;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 430px;
+    height: 100%;
+    max-height: 932px;
+    margin: 0 auto;
+    background: #0a0a0a;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 80px rgba(200,255,0,0.06), 0 0 160px rgba(0,0,0,0.8);
+    border: 1px solid #1a1a1a;
+  }
+
+  /* ---- SCREENS ---- */
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    transform: translateX(30px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  .screen.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+  }
+  .screen.slide-left {
+    transform: translateX(-30px);
+  }
+
+  /* ---- STATUS BAR ---- */
+  .status-bar {
+    height: 54px;
+    padding: 14px 24px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 600;
+    flex-shrink: 0;
+    background: #0a0a0a;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .status-bar .time { font-weight: 700; color: #e0e0e0; }
+  .status-icons { display: flex; gap: 6px; align-items: center; color: #e0e0e0; }
+
+  /* ---- HOME SCREEN ---- */
+  .home-header { padding: 8px 24px 20px; background: #0a0a0a; }
+  .home-header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .greeting { color: #666; font-size: 13px; margin-bottom: 2px; }
+  .user-name { font-size: 22px; font-weight: 700; }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: linear-gradient(135deg, #c8ff00, #8bc34a);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; color: #0a0a0a; font-size: 16px;
+  }
+
+  .stats-row { display: flex; gap: 10px; margin-bottom: 24px; }
+  .stat-card {
+    flex: 1; background: #141414; border: 1px solid #1e1e1e;
+    border-radius: 14px; padding: 12px 14px;
+  }
+  .stat-value { font-size: 24px; font-weight: 800; }
+  .stat-label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-top: 2px; }
+  .stat-card.accent .stat-value { color: #c8ff00; }
+  .stat-card.warning .stat-value { color: #ff9500; }
+
+  .section-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 24px; margin-bottom: 10px;
+  }
+  .section-title { font-size: 16px; font-weight: 700; }
+  .see-all { color: #c8ff00; font-size: 12px; font-weight: 600; cursor: pointer; }
+
+  .task-list { padding: 0 24px 100px; display: flex; flex-direction: column; gap: 10px; }
+
+  .task-card {
+    background: #141414; border: 1px solid #1e1e1e; border-radius: 16px;
+    padding: 14px 16px; display: flex; align-items: flex-start; gap: 14px;
+    cursor: pointer; transition: all 0.2s ease;
+  }
+  .task-card:hover { border-color: #2a2a2a; background: #161616; }
+  .task-card:active { transform: scale(0.98); }
+  .task-card.selected { border-color: rgba(200,255,0,0.35); background: rgba(200,255,0,0.04); }
+
+  .checkbox {
+    width: 24px; height: 24px; border-radius: 8px;
+    border: 2px solid #333; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 2px; transition: all 0.2s; cursor: pointer;
+  }
+  .task-card.done .checkbox { background: #c8ff00; border-color: #c8ff00; }
+  .task-card.done .checkbox::after { content: '✓'; color: #0a0a0a; font-size: 13px; font-weight: 700; }
+  .task-card.done .task-title { text-decoration: line-through; color: #555; }
+  .task-card.done { opacity: 0.5; }
+
+  .task-content { flex: 1; min-width: 0; }
+  .task-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; line-height: 1.3; }
+  .task-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .task-time { color: #666; font-size: 12px; }
+  .priority-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .priority-high { background: #ff3b30; box-shadow: 0 0 6px rgba(255,59,48,0.6); }
+  .priority-med { background: #ff9500; box-shadow: 0 0 6px rgba(255,149,0,0.5); }
+  .priority-low { background: #c8ff00; box-shadow: 0 0 6px rgba(200,255,0,0.5); }
+  .tag {
+    background: #1a1a1a; color: #888; font-size: 10px;
+    padding: 2px 8px; border-radius: 6px; font-weight: 600;
+  }
+  .tag.urgent { background: rgba(255,59,48,0.15); color: #ff3b30; }
+  .tag.work { background: rgba(200,255,0,0.1); color: #c8ff00; }
+
+  /* ---- DETAIL SCREEN ---- */
+  .detail-header {
+    padding: 8px 16px 16px; display: flex; align-items: center; gap: 12px;
+    background: #0a0a0a; position: sticky; top: 0; z-index: 10;
+  }
+  .back-btn {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: #141414; border: 1px solid #1e1e1e;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  .back-btn:hover { background: #1a1a1a; }
+  .back-btn svg { color: #888; }
+  .detail-screen-title { font-size: 13px; color: #666; font-weight: 600; }
+
+  .detail-body { padding: 0 24px 120px; }
+
+  .priority-row { display: flex; gap: 8px; margin-bottom: 16px; }
+  .priority-chip {
+    flex: 1; padding: 8px 6px; border-radius: 10px;
+    font-size: 12px; font-weight: 700; text-align: center;
+    background: #141414; border: 1px solid #1e1e1e; color: #555;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .priority-chip.active.low { background: rgba(200,255,0,0.1); color: #c8ff00; border-color: rgba(200,255,0,0.4); box-shadow: 0 0 12px rgba(200,255,0,0.1); }
+  .priority-chip.active.med { background: rgba(255,149,0,0.1); color: #ff9500; border-color: rgba(255,149,0,0.4); box-shadow: 0 0 12px rgba(255,149,0,0.1); }
+  .priority-chip.active.high { background: rgba(255,59,48,0.1); color: #ff3b30; border-color: rgba(255,59,48,0.4); box-shadow: 0 0 12px rgba(255,59,48,0.1); }
+
+  .detail-title-input {
+    width: 100%; background: none; border: none; outline: none;
+    color: #e0e0e0; font-size: 24px; font-weight: 800; line-height: 1.2;
+    margin-bottom: 20px; font-family: inherit; resize: none;
+  }
+
+  .info-card { background: #141414; border: 1px solid #1e1e1e; border-radius: 16px; overflow: hidden; margin-bottom: 12px; }
+  .info-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; }
+  .info-row + .info-row { border-top: 1px solid #1a1a1a; }
+  .info-label { display: flex; align-items: center; gap: 8px; color: #666; font-size: 13px; font-weight: 600; }
+  .info-value { color: #ccc; font-size: 14px; font-weight: 500; }
+  .info-value.accent { color: #c8ff00; }
+
+  .subtask-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .subtask-title { font-size: 14px; font-weight: 700; }
+  .subtask-count { font-size: 11px; color: #666; }
+  .subtask-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0; border-bottom: 1px solid #141414; cursor: pointer;
+  }
+  .subtask-item:last-child { border-bottom: none; }
+  .subtask-item:active { opacity: 0.7; }
+  .sub-check {
+    width: 20px; height: 20px; border-radius: 6px;
+    border: 2px solid #333; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+  }
+  .subtask-item.done .sub-check { background: #c8ff00; border-color: #c8ff00; }
+  .subtask-item.done .sub-check::after { content: '✓'; color: #0a0a0a; font-size: 11px; font-weight: 700; }
+  .subtask-item.done .sub-text { text-decoration: line-through; color: #555; }
+  .sub-text { color: #ccc; font-size: 14px; font-weight: 500; flex: 1; }
+
+  .notes-card { background: #141414; border: 1px solid #1e1e1e; border-radius: 16px; padding: 14px 16px; margin-top: 12px; }
+  .notes-label { color: #666; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .notes-text { color: #888; font-size: 13px; line-height: 1.6; font-style: italic; }
+
+  /* ---- CREATE SCREEN ---- */
+  .create-header {
+    padding: 8px 16px 12px; display: flex; justify-content: space-between; align-items: center;
+    background: #0f0f0f; position: sticky; top: 0; z-index: 10;
+    border-bottom: 1px solid #1a1a1a;
+  }
+  .create-cancel { color: #666; font-size: 15px; font-weight: 600; cursor: pointer; padding: 6px 4px; }
+  .create-title { font-size: 16px; font-weight: 700; }
+  .create-add-btn { background: #c8ff00; color: #0a0a0a; font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 8px; cursor: pointer; }
+
+  .create-body { padding: 20px 24px 120px; overflow-y: auto; }
+
+  .field-group { margin-bottom: 20px; }
+  .field-label { color: #555; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .field-input {
+    width: 100%; background: #141414; border: 1px solid #1e1e1e; border-radius: 12px;
+    padding: 14px 16px; color: #e0e0e0; font-size: 15px; font-weight: 500;
+    font-family: inherit; outline: none; transition: border-color 0.2s;
+  }
+  .field-input:focus { border-color: rgba(200,255,0,0.4); }
+  .field-input::placeholder { color: #333; }
+  .field-textarea {
+    width: 100%; background: #141414; border: 1px solid #1e1e1e; border-radius: 12px;
+    padding: 14px 16px; color: #e0e0e0; font-size: 14px;
+    font-family: inherit; outline: none; resize: none; height: 80px; transition: border-color 0.2s;
+  }
+  .field-textarea:focus { border-color: rgba(200,255,0,0.4); }
+  .field-textarea::placeholder { color: #333; }
+
+  .date-time-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .dt-btn {
+    flex: 1; background: #141414; border: 1px solid #1e1e1e; border-radius: 12px;
+    padding: 12px 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s;
+  }
+  .dt-btn:hover { border-color: #2a2a2a; }
+  .dt-btn svg { color: #c8ff00; flex-shrink: 0; }
+  .dt-info .dt-label { color: #555; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .dt-info .dt-value { color: #e0e0e0; font-size: 13px; font-weight: 600; margin-top: 2px; }
+
+  .priority-sel { display: flex; gap: 10px; margin-bottom: 20px; }
+  .p-btn {
+    flex: 1; background: #141414; border: 1px solid #1e1e1e; border-radius: 12px;
+    padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    cursor: pointer; transition: all 0.2s; color: #555;
+  }
+  .p-btn.active.low { background: rgba(200,255,0,0.08); color: #c8ff00; border-color: rgba(200,255,0,0.4); }
+  .p-btn.active.med { background: rgba(255,149,0,0.08); color: #ff9500; border-color: rgba(255,149,0,0.4); }
+  .p-btn.active.high { background: rgba(255,59,48,0.08); color: #ff3b30; border-color: rgba(255,59,48,0.4); }
+  .p-dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+  .p-label { font-size: 11px; font-weight: 700; }
+  .p-btn.active.low .p-dot { box-shadow: 0 0 8px rgba(200,255,0,0.7); }
+  .p-btn.active.med .p-dot { box-shadow: 0 0 8px rgba(255,149,0,0.7); }
+  .p-btn.active.high .p-dot { box-shadow: 0 0 8px rgba(255,59,48,0.7); }
+
+  .list-sel { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  .list-chip {
+    padding: 8px 16px; border-radius: 20px;
+    background: #141414; border: 1px solid #1e1e1e; color: #666;
+    font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+  }
+  .list-chip.active { border-color: rgba(200,255,0,0.4); color: #c8ff00; background: rgba(200,255,0,0.06); }
+
+  .subtask-add {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 0; cursor: pointer;
+  }
+  .subtask-add:active { opacity: 0.6; }
+  .add-icon {
+    width: 28px; height: 28px; border-radius: 8px;
+    border: 1px dashed #333; display: flex; align-items: center; justify-content: center;
+  }
+  .add-icon svg { color: #555; }
+  .subtask-add span { color: #555; font-size: 13px; font-weight: 600; transition: color 0.2s; }
+  .subtask-add:hover span, .subtask-add:active span { color: #c8ff00; }
+  .subtask-add:hover .add-icon, .subtask-add:active .add-icon { border-color: #c8ff00; }
+  .subtask-add:hover .add-icon svg, .subtask-add:active .add-icon svg { color: #c8ff00; }
+
+  /* ---- BOTTOM NAV ---- */
+  .bottom-nav {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 84px;
+    background: rgba(10,10,10,0.92);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-top: 1px solid #1a1a1a;
+    display: flex; justify-content: space-around; align-items: flex-start;
+    padding-top: 10px; z-index: 20;
+  }
+  .nav-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    cursor: pointer; padding: 4px 12px; border-radius: 12px; transition: all 0.2s;
+  }
+  .nav-btn svg { color: #444; transition: color 0.2s; }
+  .nav-btn span { font-size: 10px; color: #444; font-weight: 600; transition: color 0.2s; }
+  .nav-btn.active svg { color: #c8ff00; }
+  .nav-btn.active span { color: #c8ff00; }
+  .nav-btn:active { opacity: 0.7; }
+
+  /* ---- FAB ---- */
+  .fab {
+    position: absolute; bottom: 100px; right: 20px;
+    width: 56px; height: 56px; border-radius: 18px;
+    background: #c8ff00; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 32px rgba(200,255,0,0.35), 0 0 0 1px rgba(200,255,0,0.15);
+    cursor: pointer; transition: all 0.2s; z-index: 15;
+  }
+  .fab:hover { transform: scale(1.06); box-shadow: 0 12px 40px rgba(200,255,0,0.45); }
+  .fab:active { transform: scale(0.95); }
+  .fab svg { color: #0a0a0a; }
+
+  /* ---- SAVE BUTTON ---- */
+  .save-bar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 16px 24px 36px;
+    background: linear-gradient(transparent, rgba(10,10,10,0.95));
+    z-index: 15;
+  }
+  .save-btn {
+    width: 100%; height: 52px; background: #c8ff00; border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700; color: #0a0a0a;
+    cursor: pointer; box-shadow: 0 8px 24px rgba(200,255,0,0.2);
+    transition: all 0.2s;
+  }
+  .save-btn:active { transform: scale(0.97); box-shadow: 0 4px 16px rgba(200,255,0,0.3); }
+
+  /* ---- TOAST ---- */
+  .toast {
+    position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-20px);
+    background: #1e1e1e; border: 1px solid #2a2a2a; color: #ccc;
+    padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 600;
+    z-index: 100; opacity: 0; transition: all 0.3s ease; pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.accent { border-color: rgba(200,255,0,0.3); color: #c8ff00; }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- ===================== HOME SCREEN ===================== -->
+  <div class="screen active" id="screen-home">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="status-icons">
+        <svg width="16" height="12" viewBox="0 0 18 12" fill="currentColor"><path d="M1 4.5C1 3.67 1.67 3 2.5 3h13c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5h-13A1.5 1.5 0 0 1 1 9.5v-5Z"/></svg>
+        <svg width="14" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 2.5C5.5 2.5 3.4 3.9 2.3 6H1c.8 0 1.5.7 1.5 1.5v2C2.5 10.3 3.2 11 4 11h8c.8 0 1.5-.7 1.5-1.5v-2C13.5 3.7 12.8 3 12 3h-1.3C10.6 3.9 8.5 2.5 6 2.5Z"/></svg>
+        <svg width="22" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor" fill="none"/><rect x="2" y="2" width="17" height="8" rx="1.5" fill="currentColor" opacity="0.3"/><rect x="21" y="3.5" width="2.5" height="5" rx="1" fill="currentColor"/></svg>
+      </div>
+    </div>
+
+    <div class="home-header">
+      <div class="home-header-top">
+        <div>
+          <div class="greeting">Good morning</div>
+          <div class="user-name">Julius</div>
+        </div>
+        <div class="avatar">JA</div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card accent">
+          <div class="stat-value">12</div>
+          <div class="stat-label">Due Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">5</div>
+          <div class="stat-label">In Progress</div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-value">3</div>
+          <div class="stat-label">Overdue</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Today's Tasks</div>
+      <div class="see-all">See all →</div>
+    </div>
+
+    <div class="task-list" id="task-list">
+      <div class="task-card selected" data-id="1" onclick="openDetail(1)">
+        <div class="checkbox" onclick="event.stopPropagation(); toggleDone(this)"></div>
+        <div class="task-content">
+          <div class="task-title">Finalize Q2 investor deck</div>
+          <div class="task-meta">
+            <div class="priority-dot priority-high"></div>
+            <div class="task-time">Due 2:00 PM</div>
+            <div class="tag urgent">Urgent</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="task-card" data-id="2" onclick="openDetail(2)">
+        <div class="checkbox" onclick="event.stopPropagation(); toggleDone(this)"></div>
+        <div class="task-content">
+          <div class="task-title">Review Notionalize onboarding flow</div>
+          <div class="task-meta">
+            <div class="priority-dot priority-med"></div>
+            <div class="task-time">Due 5:00 PM</div>
+            <div class="tag work">Work</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="task-card" data-id="3" onclick="openDetail(3)">
+        <div class="checkbox" onclick="event.stopPropagation(); toggleDone(this)"></div>
+        <div class="task-content">
+          <div class="task-title">Reply to Kiannah's message</div>
+          <div class="task-meta">
+            <div class="priority-dot priority-low"></div>
+            <div class="task-time">Due 11:00 AM</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="task-card" data-id="4" onclick="openDetail(4)">
+        <div class="checkbox" onclick="event.stopPropagation(); toggleDone(this)"></div>
+        <div class="task-content">
+          <div class="task-title">Sync with BrandingU team</div>
+          <div class="task-meta">
+            <div class="priority-dot priority-med"></div>
+            <div class="task-time">Tomorrow</div>
+            <div class="tag work">Work</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="task-card" data-id="5" onclick="openDetail(5)">
+        <div class="checkbox" onclick="event.stopPropagation(); toggleDone(this)"></div>
+        <div class="task-content">
+          <div class="task-title">Gym session</div>
+          <div class="task-meta">
+            <div class="priority-dot priority-low"></div>
+            <div class="task-time">6:00 PM</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fab" onclick="openCreate()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </div>
+
+    <div class="bottom-nav">
+      <div class="nav-btn active" onclick="switchTab('home')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+        <span>Home</span>
+      </div>
+      <div class="nav-btn" onclick="switchTab('calendar')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span>Calendar</span>
+      </div>
+      <div class="nav-btn" onclick="switchTab('focus')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>Focus</span>
+      </div>
+      <div class="nav-btn" onclick="switchTab('profile')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Profile</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== DETAIL SCREEN ===================== -->
+  <div class="screen" id="screen-detail">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="status-icons">
+        <svg width="16" height="12" viewBox="0 0 18 12" fill="currentColor"><path d="M1 4.5C1 3.67 1.67 3 2.5 3h13c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5h-13A1.5 1.5 0 0 1 1 9.5v-5Z"/></svg>
+        <svg width="22" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor" fill="none"/><rect x="2" y="2" width="17" height="8" rx="1.5" fill="currentColor" opacity="0.3"/><rect x="21" y="3.5" width="2.5" height="5" rx="1" fill="currentColor"/></svg>
+      </div>
+    </div>
+
+    <div class="detail-header">
+      <div class="back-btn" onclick="goBack()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </div>
+      <div class="detail-screen-title">Task Details</div>
+    </div>
+
+    <div class="detail-body">
+      <div class="priority-row">
+        <div class="priority-chip" onclick="selectPriority(this, 'low')">Low</div>
+        <div class="priority-chip" onclick="selectPriority(this, 'med')">Medium</div>
+        <div class="priority-chip active high" onclick="selectPriority(this, 'high')">High</div>
+      </div>
+
+      <textarea class="detail-title-input" id="detail-title" rows="2">Finalize Q2 investor deck</textarea>
+
+      <div class="info-card">
+        <div class="info-row">
+          <div class="info-label">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Due Date
+          </div>
+          <div class="info-value">Today, 2:00 PM</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Assignee
+          </div>
+          <div class="info-value accent">Julius Alba</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            List
+          </div>
+          <div class="info-value">Work</div>
+        </div>
+      </div>
+
+      <div class="subtask-header">
+        <div class="subtask-title">Subtasks</div>
+        <div class="subtask-count" id="subtask-count">2 of 4 done</div>
+      </div>
+      <div class="info-card">
+        <div class="subtask-item done" onclick="toggleSubtask(this)">
+          <div class="sub-check"></div>
+          <div class="sub-text">Review financial projections</div>
+        </div>
+        <div class="subtask-item done" onclick="toggleSubtask(this)">
+          <div class="sub-check"></div>
+          <div class="sub-text">Add competitive analysis slide</div>
+        </div>
+        <div class="subtask-item" onclick="toggleSubtask(this)">
+          <div class="sub-check"></div>
+          <div class="sub-text">Finalize team bios</div>
+        </div>
+        <div class="subtask-item" onclick="toggleSubtask(this)">
+          <div class="sub-check"></div>
+          <div class="sub-text">Export to PDF</div>
+        </div>
+      </div>
+
+      <div class="notes-card">
+        <div class="notes-label">Notes</div>
+        <div class="notes-text">Make sure to include the new growth metrics. Vanessa wants the branding section expanded.</div>
+      </div>
+    </div>
+
+    <div class="save-bar">
+      <div class="save-btn" onclick="saveDetail()">Save Changes</div>
+    </div>
+
+    <div class="bottom-nav">
+      <div class="nav-btn" onclick="switchTab('home')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+        <span>Home</span>
+      </div>
+      <div class="nav-btn" onclick="switchTab('calendar')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span>Calendar</span>
+      </div>
+      <div class="nav-btn" onclick="switchTab('focus')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>Focus</span>
+      </div>
+      <div class="nav-btn" onclick="switchTab('profile')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Profile</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== CREATE SCREEN ===================== -->
+  <div class="screen" id="screen-create">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="status-icons">
+        <svg width="16" height="12" viewBox="0 0 18 12" fill="currentColor"><path d="M1 4.5C1 3.67 1.67 3 2.5 3h13c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5h-13A1.5 1.5 0 0 1 1 9.5v-5Z"/></svg>
+        <svg width="22" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor" fill="none"/><rect x="2" y="2" width="17" height="8" rx="1.5" fill="currentColor" opacity="0.3"/><rect x="21" y="3.5" width="2.5" height="5" rx="1" fill="currentColor"/></svg>
+      </div>
+    </div>
+
+    <div class="create-header">
+      <div class="create-cancel" onclick="goBack()">Cancel</div>
+      <div class="create-title">New Task</div>
+      <div class="create-add-btn" onclick="createTask()">Add</div>
+    </div>
+
+    <div class="create-body">
+      <div class="field-group">
+        <div class="field-label">Task Name</div>
+        <input class="field-input" id="create-title" placeholder="What needs to be done?" value="Finalize Q2 investor deck" />
+      </div>
+
+      <div class="field-group">
+        <div class="field-label">Description</div>
+        <textarea class="field-textarea" id="create-desc" placeholder="Add details...">Make sure to include the new growth metrics section</textarea>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label">Due Date & Time</div>
+        <div class="date-time-row">
+          <div class="dt-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <div class="dt-info"><div class="dt-label">Date</div><div class="dt-value">Today</div></div>
+          </div>
+          <div class="dt-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <div class="dt-info"><div class="dt-label">Time</div><div class="dt-value">2:00 PM</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label">Priority</div>
+        <div class="priority-sel">
+          <div class="p-btn low" onclick="selectCreatePriority(this, 'low')">
+            <div class="p-dot"></div>
+            <div class="p-label">Low</div>
+          </div>
+          <div class="p-btn med" onclick="selectCreatePriority(this, 'med')">
+            <div class="p-dot"></div>
+            <div class="p-label">Medium</div>
+          </div>
+          <div class="p-btn high active" onclick="selectCreatePriority(this, 'high')">
+            <div class="p-dot"></div>
+            <div class="p-label">High</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label">List</div>
+        <div class="list-sel">
+          <div class="list-chip" onclick="selectList(this)">Personal</div>
+          <div class="list-chip active" onclick="selectList(this)">Work</div>
+          <div class="list-chip" onclick="selectList(this)">Design</div>
+          <div class="list-chip" onclick="selectList(this)">Finance</div>
+        </div>
+      </div>
+
+      <div class="subtask-add" onclick="showToast('Subtasks coming soon!')">
+        <div class="add-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <span>Add subtask</span>
+      </div>
+    </div>
+
+    <div class="save-bar" style="padding-bottom: 36px;">
+      <div class="save-btn" onclick="createTask()">Create Task</div>
+    </div>
+  </div>
+
+  <!-- ===================== CALENDAR / FOCUS / PROFILE STUBS ===================== -->
+  <div class="screen" id="screen-calendar">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="status-icons">
+        <svg width="16" height="12" viewBox="0 0 18 12" fill="currentColor"><path d="M1 4.5C1 3.67 1.67 3 2.5 3h13c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5h-13A1.5 1.5 0 0 1 1 9.5v-5Z"/></svg>
+        <svg width="22" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor" fill="none"/><rect x="2" y="2" width="17" height="8" rx="1.5" fill="currentColor" opacity="0.3"/><rect x="21" y="3.5" width="2.5" height="5" rx="1" fill="currentColor"/></svg>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:70%;gap:16px;opacity:0.4">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" color="#c8ff00"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <div style="font-size:20px;font-weight:700;color:#e0e0e0">Calendar</div>
+      <div style="font-size:13px;color:#555;text-align:center">Tap nav to go back to Home</div>
+    </div>
+    <div class="bottom-nav">
+      <div class="nav-btn" onclick="switchTab('home')"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg><span>Home</span></div>
+      <div class="nav-btn active" onclick="switchTab('calendar')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Calendar</span></div>
+      <div class="nav-btn" onclick="switchTab('focus')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Focus</span></div>
+      <div class="nav-btn" onclick="switchTab('profile')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-focus">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="status-icons">
+        <svg width="16" height="12" viewBox="0 0 18 12" fill="currentColor"><path d="M1 4.5C1 3.67 1.67 3 2.5 3h13c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5h-13A1.5 1.5 0 0 1 1 9.5v-5Z"/></svg>
+        <svg width="22" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor" fill="none"/><rect x="2" y="2" width="17" height="8" rx="1.5" fill="currentColor" opacity="0.3"/><rect x="21" y="3.5" width="2.5" height="5" rx="1" fill="currentColor"/></svg>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:70%;gap:16px;opacity:0.4">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" color="#c8ff00"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <div style="font-size:20px;font-weight:700;color:#e0e0e0">Focus Mode</div>
+      <div style="font-size:13px;color:#555;text-align:center">Tap nav to go back to Home</div>
+    </div>
+    <div class="bottom-nav">
+      <div class="nav-btn" onclick="switchTab('home')"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg><span>Home</span></div>
+      <div class="nav-btn" onclick="switchTab('calendar')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Calendar</span></div>
+      <div class="nav-btn active" onclick="switchTab('focus')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Focus</span></div>
+      <div class="nav-btn" onclick="switchTab('profile')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-profile">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="status-icons">
+        <svg width="16" height="12" viewBox="0 0 18 12" fill="currentColor"><path d="M1 4.5C1 3.67 1.67 3 2.5 3h13c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5h-13A1.5 1.5 0 0 1 1 9.5v-5Z"/></svg>
+        <svg width="22" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor" fill="none"/><rect x="2" y="2" width="17" height="8" rx="1.5" fill="currentColor" opacity="0.3"/><rect x="21" y="3.5" width="2.5" height="5" rx="1" fill="currentColor"/></svg>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:70%;gap:16px;opacity:0.4">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" color="#c8ff00"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <div style="font-size:20px;font-weight:700;color:#e0e0e0">Profile</div>
+      <div style="font-size:13px;color:#555;text-align:center">Tap nav to go back to Home</div>
+    </div>
+    <div class="bottom-nav">
+      <div class="nav-btn" onclick="switchTab('home')"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg><span>Home</span></div>
+      <div class="nav-btn" onclick="switchTab('calendar')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Calendar</span></div>
+      <div class="nav-btn" onclick="switchTab('focus')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Focus</span></div>
+      <div class="nav-btn active" onclick="switchTab('profile')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  // ---- NAVIGATION ----
+  let navStack = ['home'];
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => {
+      s.classList.remove('active');
+      s.classList.remove('slide-left');
+    });
+    const target = document.getElementById('screen-' + id);
+    if (target) {
+      target.classList.add('active');
+    }
+  }
+
+  function switchTab(tab) {
+    navStack = [tab];
+    showScreen(tab);
+    updateNav(tab);
+  }
+
+  function updateNav(tab) {
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      if (btn.onclick && btn.onclick.toString().includes("'" + tab + "'")) {
+        btn.classList.add('active');
+      }
+    });
+  }
+
+  function openDetail(id) {
+    navStack.push('detail');
+    showScreen('detail');
+  }
+
+  function openCreate() {
+    navStack.push('create');
+    showScreen('create');
+  }
+
+  function goBack() {
+    navStack.pop();
+    const prev = navStack[navStack.length - 1] || 'home';
+    showScreen(prev);
+    updateNav(prev);
+  }
+
+  // ---- TASK INTERACTIONS ----
+  function toggleDone(el) {
+    const card = el.closest('.task-card');
+    card.classList.toggle('done');
+    if (card.classList.contains('done')) {
+      showToast('Task completed! ✓', 'accent');
+    }
+  }
+
+  function toggleSubtask(el) {
+    el.classList.toggle('done');
+    updateSubtaskCount();
+  }
+
+  function updateSubtaskCount() {
+    const total = document.querySelectorAll('#screen-detail .subtask-item').length;
+    const done = document.querySelectorAll('#screen-detail .subtask-item.done').length;
+    document.getElementById('subtask-count').textContent = done + ' of ' + total + ' done';
+  }
+
+  // ---- PRIORITY ----
+  function selectPriority(el, level) {
+    el.closest('.priority-row').querySelectorAll('.priority-chip').forEach(c => {
+      c.classList.remove('active', 'low', 'med', 'high');
+    });
+    el.classList.add('active', level);
+  }
+
+  function selectCreatePriority(el, level) {
+    el.closest('.priority-sel').querySelectorAll('.p-btn').forEach(c => {
+      c.classList.remove('active', 'low', 'med', 'high');
+    });
+    el.classList.add('active', level);
+  }
+
+  // ---- LISTS ----
+  function selectList(el) {
+    el.closest('.list-sel').querySelectorAll('.list-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // ---- SAVE / CREATE ----
+  function saveDetail() {
+    const title = document.getElementById('detail-title').value;
+    showToast('Changes saved!', 'accent');
+    setTimeout(() => goBack(), 600);
+  }
+
+  function createTask() {
+    const title = document.getElementById('create-title').value;
+    if (!title.trim()) {
+      showToast('Please enter a task name');
+      return;
+    }
+    showToast('Task created!', 'accent');
+    setTimeout(() => {
+      navStack = ['home'];
+      showScreen('home');
+      updateNav('home');
+    }, 600);
+  }
+
+  // ---- TOAST ----
+  function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast' + (type ? ' ' + type : '');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  // ---- INIT ----
+  updateNav('home');
+</script>
+</body>
+</html>
