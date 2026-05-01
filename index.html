@@ -2,55 +2,67 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>TaskFlow</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
   :root {
-    --bg: #000;
-    --surface: rgba(24, 24, 27, 0.7);
-    --surface-solid: #18181B;
-    --card: rgba(28, 28, 32, 0.6);
-    --card-solid: #1C1C20;
-    --border: rgba(63, 63, 70, 0.5);
-    --border-light: rgba(255,255,255,0.06);
-    --text: #FAFAFA;
-    --text-muted: #A1A1AA;
-    --text-dim: #52525B;
+    --bg: #050508;
+    --surface-1: #0c0c10;
+    --surface-2: #121216;
+    --surface-3: #1a1a1f;
+    --border: rgba(255,255,255,0.06);
+    --border-light: rgba(255,255,255,0.04);
+    --text: #F5F5F7;
+    --text-secondary: #A1A1AA;
+    --text-muted: #636366;
+    --text-dim: #48484A;
     --accent: #C8FF00;
     --accent-dim: rgba(200,255,0,0.1);
+    --accent-border: rgba(200,255,0,0.25);
     --accent-glow: rgba(200,255,0,0.2);
-    --priority-high: #EF4444;
-    --priority-med: #F59E0B;
-    --priority-low: #22C55E;
-    --glass-bg: rgba(20, 20, 24, 0.82);
-    --glass-border: rgba(255,255,255,0.08);
-    --radius: 16px;
-    --radius-lg: 24px;
-    --radius-sm: 10px;
+    --prio-high: #FF453A;
+    --prio-high-bg: rgba(255,69,58,0.12);
+    --prio-high-border: rgba(255,69,58,0.3);
+    --prio-med: #FF9F0A;
+    --prio-med-bg: rgba(255,159,10,0.12);
+    --prio-med-border: rgba(255,159,10,0.3);
+    --prio-low: #30D158;
+    --prio-low-bg: rgba(48,209,88,0.12);
+    --prio-low-border: rgba(48,209,88,0.3);
+    --tag-work-bg: rgba(200,255,0,0.08);
+    --tag-work-border: rgba(200,255,0,0.2);
+    --tag-personal-bg: rgba(48,209,88,0.08);
+    --tag-personal-border: rgba(48,209,88,0.2);
+    --tag-urgent-bg: rgba(255,69,58,0.08);
+    --tag-urgent-border: rgba(255,69,58,0.2);
+    --radius: 20px;
+    --radius-lg: 28px;
+    --radius-sm: 12px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   html, body {
     height: 100%;
     overflow: hidden;
-    background: #000;
+    background: var(--bg);
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
     color: var(--text);
-    touch-action: pan-y;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* ---- WALLPAPER BG ---- */
+  /* ---- WALLPAPER ---- */
   .wallpaper {
-    position: fixed; inset: 0; z-index: 0;
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
     background:
-      radial-gradient(ellipse at 20% 0%, rgba(200,255,0,0.06) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 100%, rgba(59,130,246,0.06) 0%, transparent 50%),
-      radial-gradient(ellipse at 50% 50%, rgba(88,28,135,0.08) 0%, transparent 70%),
-      #000;
+      radial-gradient(ellipse 60% 40% at 15% 0%, rgba(200,255,0,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 85% 0%, rgba(94,92,238,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 60% at 50% 100%, rgba(200,255,0,0.02) 0%, transparent 50%),
+      #050508;
   }
 
-  /* ---- APP SHELL ---- */
+  /* ---- LAYOUT ---- */
   .app {
     position: relative; z-index: 1;
     width: 100%; max-width: 430px;
@@ -62,117 +74,115 @@
 
   /* ---- STATUS BAR ---- */
   .status-bar {
-    height: 52px; padding: 12px 24px 0;
+    height: 52px; padding: 14px 24px 0;
     display: flex; justify-content: space-between; align-items: center;
     font-size: 15px; font-weight: 600; flex-shrink: 0;
   }
-  .status-icons { display: flex; gap: 5px; align-items: center; }
 
   /* ---- SCREENS ---- */
   .screen {
     position: absolute; inset: 0;
     display: flex; flex-direction: column;
     opacity: 0; pointer-events: none;
-    transition: opacity 0.3s ease;
-    overflow-y: auto; overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
+    transition: opacity 0.28s ease;
   }
   .screen.active { opacity: 1; pointer-events: auto; }
 
-  /* ---- GLASS CARD ---- */
-  .glass-card {
-    background: var(--glass-bg);
-    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-    border: 1px solid var(--glass-border);
+  /* ---- SURFACE CARD ---- */
+  .card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
   }
-  .glass-card-solid {
-    background: var(--card-solid);
+  .card-deep {
+    background: var(--surface-1);
     border: 1px solid var(--border-light);
     border-radius: var(--radius);
   }
 
   /* ---- HOME ---- */
-  .home-scroll { padding: 0 20px 100px; flex: 1; }
+  .home-scroll {
+    flex: 1; overflow-y: auto; overflow-x: hidden;
+    -webkit-overscrolling-behavior: touch;
+    padding: 0 20px 110px;
+  }
 
-  .user-row {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 14px 0 20px;
-  }
-  .user-name {
-    font-size: 28px; font-weight: 800; letter-spacing: -0.6px; line-height: 1;
-  }
-  .greeting { font-size: 13px; color: var(--text-dim); margin-bottom: 4px; font-weight: 500; }
+  .greeting { font-size: 13px; color: var(--text-muted); font-weight: 500; margin-bottom: 4px; }
+  .user-name { font-size: 30px; font-weight: 800; letter-spacing: -0.7px; line-height: 1; }
+  .user-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0 20px; }
   .avatar {
-    width: 40px; height: 40px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent) 0%, #7ab800 100%);
+    width: 42px; height: 42px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #8bc400);
     display: flex; align-items: center; justify-content: center;
-    font-weight: 800; color: #000; font-size: 14px;
-    box-shadow: 0 0 20px rgba(200,255,0,0.3);
+    font-weight: 800; color: #050508; font-size: 15px;
+    box-shadow: 0 0 24px rgba(200,255,0,0.25);
   }
 
-  /* Date pill — glass */
+  /* Date pill */
   .date-pill {
     display: inline-flex; align-items: center; gap: 8px;
-    background: var(--glass-bg); backdrop-filter: blur(16px);
-    border: 1px solid var(--glass-border);
+    background: var(--surface-2); border: 1px solid var(--border);
     border-radius: 20px; padding: 7px 16px;
-    font-size: 12px; font-weight: 600; color: var(--text-muted);
-    margin-bottom: 22px;
+    font-size: 12px; font-weight: 600; color: var(--text-secondary);
+    margin-bottom: 20px;
   }
-  .date-pill .dot {
+  .pulse-dot {
     width: 7px; height: 7px; border-radius: 50%;
-    background: var(--accent); box-shadow: 0 0 8px var(--accent);
-    animation: pulse 2s ease-in-out infinite;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    animation: blink 2.5s ease-in-out infinite;
   }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
+  @keyframes blink {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
   }
 
-  /* Stats row — glass */
+  /* Stats */
   .stats-row { display: flex; gap: 10px; margin-bottom: 22px; }
   .stat-card {
     flex: 1; padding: 16px 14px;
-    background: var(--glass-bg); backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius);
-    position: relative; overflow: hidden;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius); position: relative; overflow: hidden;
   }
   .stat-card::after {
     content: ''; position: absolute;
-    bottom: 0; left: 0; right: 0; height: 3px;
+    bottom: 0; left: 0; right: 0; height: 2px;
     border-radius: 0 0 var(--radius) var(--radius);
   }
-  .stat-card.green::after { background: linear-gradient(90deg, var(--accent), #7ab800); }
-  .stat-card.amber::after { background: linear-gradient(90deg, var(--priority-med), #d97706); }
-  .stat-card.red::after { background: linear-gradient(90deg, var(--priority-high), #dc2626); }
-  .stat-num { font-size: 30px; font-weight: 800; letter-spacing: -1.5px; line-height: 1; }
-  .stat-card.green .stat-num { color: var(--accent); text-shadow: 0 0 20px rgba(200,255,0,0.4); }
-  .stat-card.amber .stat-num { color: var(--priority-med); }
-  .stat-card.red .stat-num { color: var(--priority-high); }
-  .stat-lbl { font-size: 10px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 5px; }
+  .stat-card.green::after { background: linear-gradient(90deg, var(--prio-low), #1fa344); }
+  .stat-card.amber::after { background: linear-gradient(90deg, var(--prio-med), #cc7a00); }
+  .stat-card.red::after { background: linear-gradient(90deg, var(--prio-high), #cc2f22); }
+  .stat-num { font-size: 32px; font-weight: 800; letter-spacing: -2px; line-height: 1; }
+  .stat-card.green .stat-num { color: var(--prio-low); }
+  .stat-card.amber .stat-num { color: var(--prio-med); }
+  .stat-card.red .stat-num { color: var(--prio-high); }
+  .stat-lbl { font-size: 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 4px; }
 
-  /* Progress — glass */
+  /* Progress */
   .progress-section { margin-bottom: 24px; }
   .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .progress-title { font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.6px; }
+  .progress-title { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.7px; }
   .progress-pct { font-size: 13px; font-weight: 800; color: var(--accent); }
-  .progress-track {
-    height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden;
-  }
+  .progress-track { height: 4px; background: var(--surface-3); border-radius: 2px; overflow: hidden; }
   .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--accent), #a3d400);
-    border-radius: 3px;
-    box-shadow: 0 0 12px rgba(200,255,0,0.4);
-    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    background: linear-gradient(90deg, var(--accent), #9fd400);
+    border-radius: 2px;
+    transition: width 0.7s cubic-bezier(0.34, 1.2, 0.64, 1);
+    position: relative;
+  }
+  .progress-fill::after {
+    content: '';
+    position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 10px rgba(200,255,0,0.7);
   }
 
   /* Section header */
   .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  .section-title { font-size: 18px; font-weight: 700; }
-  .section-count { font-size: 11px; color: var(--text-dim); font-weight: 600; }
+  .section-title { font-size: 20px; font-weight: 700; }
+  .section-count { font-size: 11px; color: var(--text-muted); font-weight: 600; }
 
   /* Task list */
   .task-list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 24px; }
@@ -180,124 +190,228 @@
   .task-card {
     display: flex; align-items: flex-start; gap: 14px;
     padding: 15px 16px;
-    background: var(--glass-bg); backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
+    background: var(--surface-2); border: 1px solid var(--border);
     border-radius: var(--radius);
     cursor: pointer;
-    transition: all 0.22s ease;
+    transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
     position: relative; overflow: hidden;
   }
+  .task-card:active { transform: scale(0.975); background: var(--surface-3); }
+
+  /* Priority left bar */
   .task-card::before {
     content: ''; position: absolute;
     left: 0; top: 0; bottom: 0; width: 3px;
-    border-radius: 3px 0 0 3px;
   }
-  .task-card.high::before { background: var(--priority-high); box-shadow: 0 0 10px rgba(239,68,68,0.5); }
-  .task-card.med::before { background: var(--priority-med); box-shadow: 0 0 10px rgba(245,158,11,0.5); }
-  .task-card.low::before { background: var(--priority-low); box-shadow: 0 0 10px rgba(34,197,94,0.5); }
-  .task-card:active { transform: scale(0.975); background: rgba(30,30,35,0.85); }
+  .task-card.high-prio::before { background: var(--prio-high); box-shadow: 0 0 10px rgba(255,69,58,0.5); }
+  .task-card.med-prio::before { background: var(--prio-med); box-shadow: 0 0 10px rgba(255,159,10,0.5); }
+  .task-card.low-prio::before { background: var(--prio-low); box-shadow: 0 0 10px rgba(48,209,88,0.4); }
 
-  .task-check {
-    width: 22px; height: 22px; border-radius: 7px;
-    border: 1.5px solid rgba(255,255,255,0.15);
-    flex-shrink: 0; margin-top: 2px;
+  /* Checkbox */
+  .check {
+    width: 24px; height: 24px; border-radius: 8px;
+    border: 1.5px solid rgba(255,255,255,0.12);
+    flex-shrink: 0; margin-top: 1px;
     display: flex; align-items: center; justify-content: center;
     transition: all 0.2s ease; cursor: pointer;
     background: rgba(255,255,255,0.04);
   }
-  .task-check:hover { border-color: var(--accent); box-shadow: 0 0 10px rgba(200,255,0,0.2); }
-  .task-card.done .task-check {
+  .check:hover { border-color: var(--accent); box-shadow: 0 0 12px rgba(200,255,0,0.15); }
+  .task-card.done-state .check {
     background: var(--accent); border-color: var(--accent);
-    box-shadow: 0 0 14px rgba(200,255,0,0.4);
+    box-shadow: 0 0 14px rgba(200,255,0,0.3);
   }
-  .task-card.done .task-check::after {
-    content: ''; display: block;
-    width: 6px; height: 4px; border: 2px solid #000;
-    border-top: none; border-right: none;
+  .task-card.done-state .check::after {
+    content: '';
+    display: block; width: 6px; height: 4px;
+    border: 2px solid #050508; border-top: none; border-right: none;
     transform: rotate(-45deg); margin-bottom: 2px;
   }
-  .task-card.done .task-title { text-decoration: line-through; color: var(--text-dim); }
-  .task-card.done { opacity: 0.45; }
+  .task-card.done-state .task-title {
+    text-decoration: line-through; color: var(--text-muted);
+  }
+  .task-card.done-state { opacity: 0.45; }
 
   .task-body { flex: 1; min-width: 0; }
-  .task-title { font-size: 15px; font-weight: 600; margin-bottom: 7px; line-height: 1.35; }
-  .task-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .task-time { font-size: 11px; color: var(--text-dim); font-weight: 500; display: flex; align-items: center; gap: 4px; }
-  .pdot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-  .pdot.high { background: var(--priority-high); box-shadow: 0 0 6px rgba(239,68,68,0.7); }
-  .pdot.med { background: var(--priority-med); box-shadow: 0 0 6px rgba(245,158,11,0.7); }
-  .pdot.low { background: var(--priority-low); box-shadow: 0 0 6px rgba(34,197,94,0.7); }
-  .task-tag {
-    font-size: 10px; font-weight: 700; padding: 2px 9px; border-radius: 6px;
+  .task-title { font-size: 15px; font-weight: 600; margin-bottom: 8px; line-height: 1.35; }
+  .task-meta { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
+  .task-time { font-size: 11px; color: var(--text-muted); font-weight: 500; display: flex; align-items: center; gap: 4px; }
+
+  /* Priority dot */
+  .pdot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .pdot.hi { background: var(--prio-high); box-shadow: 0 0 6px rgba(255,69,58,0.6); }
+  .pdot.me { background: var(--prio-med); box-shadow: 0 0 6px rgba(255,159,10,0.6); }
+  .pdot.lo { background: var(--prio-low); box-shadow: 0 0 6px rgba(48,209,88,0.6); }
+
+  /* Tags */
+  .tag {
+    font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 6px;
     text-transform: uppercase; letter-spacing: 0.3px;
   }
-  .task-tag.work { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(200,255,0,0.2); }
-  .task-tag.urgent { background: rgba(239,68,68,0.12); color: #EF4444; border: 1px solid rgba(239,68,68,0.25); }
-  .task-tag.personal { background: rgba(59,130,246,0.1); color: #60A5FA; border: 1px solid rgba(59,130,246,0.2); }
+  .tag.work { background: var(--tag-work-bg); color: var(--accent); border: 1px solid var(--tag-work-border); }
+  .tag.urgent { background: var(--tag-urgent-bg); color: var(--prio-high); border: 1px solid var(--tag-urgent-border); }
+  .tag.personal { background: var(--tag-personal-bg); color: var(--prio-low); border: 1px solid var(--tag-personal-border); }
 
   /* FAB */
   .fab {
-    position: absolute; bottom: 88px; right: 20px;
-    width: 56px; height: 56px; border-radius: 18px;
-    background: var(--accent);
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 8px 32px rgba(200,255,0,0.35), 0 0 0 1px rgba(200,255,0,0.15);
+    position: absolute; bottom: 96px; right: 20px;
+    width: 58px; height: 58px; border-radius: 18px;
+    background: var(--accent); display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 32px rgba(200,255,0,0.3), 0 0 0 1px rgba(200,255,0,0.1);
     cursor: pointer; transition: all 0.22s ease; z-index: 15;
   }
-  .fab:hover { transform: scale(1.08); box-shadow: 0 12px 40px rgba(200,255,0,0.45); }
-  .fab:active { transform: scale(0.92); }
+  .fab:hover { transform: scale(1.07); box-shadow: 0 12px 40px rgba(200,255,0,0.4); }
+  .fab:active { transform: scale(0.91); }
 
-  /* ---- BOTTOM NAV — GLASS ---- */
+  /* ---- BOTTOM NAV ---- */
   .bottom-nav {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    height: 80px;
-    background: rgba(0,0,0,0.75);
-    backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
-    border-top: 1px solid rgba(255,255,255,0.06);
+    height: calc(72px + var(--safe-bottom));
+    padding-bottom: var(--safe-bottom);
+    background: rgba(5,5,8,0.88);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border-top: 1px solid rgba(255,255,255,0.05);
     display: flex; justify-content: space-around; align-items: flex-start;
-    padding-top: 10px; z-index: 20;
+    padding-top: 8px; z-index: 20; flex-shrink: 0;
   }
   .nav-btn {
     display: flex; flex-direction: column; align-items: center; gap: 4px;
-    cursor: pointer; padding: 6px 18px; border-radius: 12px; transition: all 0.2s;
+    cursor: pointer; padding: 6px 20px; border-radius: 12px; transition: all 0.2s;
   }
-  .nav-btn svg { color: #52525B; transition: color 0.2s; }
-  .nav-btn span { font-size: 10px; color: #52525B; font-weight: 600; transition: color 0.2s; }
+  .nav-btn svg { color: var(--text-muted); transition: color 0.2s; }
+  .nav-btn span { font-size: 10px; color: var(--text-muted); font-weight: 600; transition: color 0.2s; }
   .nav-btn.active svg { color: var(--accent); filter: drop-shadow(0 0 8px rgba(200,255,0,0.5)); }
   .nav-btn.active span { color: var(--accent); }
-  .nav-btn:active { opacity: 0.65; }
+  .nav-btn:active { opacity: 0.6; }
 
-  /* ---- DETAIL SCREEN ---- */
-  .detail-header {
+  /* ---- CREATE SHEET ---- */
+  .sheet-bg {
+    position: absolute; inset: 0; z-index: 30;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+  }
+  .sheet-bg.active { opacity: 1; pointer-events: auto; }
+
+  .sheet {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: #101014;
+    border-radius: 28px 28px 0 0;
+    z-index: 31;
+    transform: translateY(110%);
+    transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+    max-height: 90%;
+    border-top: 1px solid rgba(255,255,255,0.07);
+  }
+  .sheet.active { transform: translateY(0); }
+  .sheet-handle {
+    width: 36px; height: 5px; background: rgba(255,255,255,0.15);
+    border-radius: 3px; margin: 12px auto 0;
+  }
+  .sheet-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .sheet-ttl { font-size: 18px; font-weight: 700; }
+  .sheet-x { font-size: 15px; font-weight: 600; color: var(--text-muted); cursor: pointer; padding: 4px; transition: color 0.2s; }
+  .sheet-x:hover { color: var(--text); }
+  .sheet-add {
+    background: var(--accent); color: #050508;
+    font-size: 14px; font-weight: 700; padding: 8px 18px; border-radius: 10px; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(200,255,0,0.25); transition: all 0.2s;
+  }
+  .sheet-add:hover { box-shadow: 0 6px 20px rgba(200,255,0,0.35); }
+  .sheet-body { padding: 18px 20px 48px; overflow-y: auto; max-height: 75vh; }
+
+  .field { margin-bottom: 16px; }
+  .field-lbl { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 8px; }
+  .field-input {
+    width: 100%; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 14px 16px;
+    color: var(--text); font-size: 15px; font-weight: 500; font-family: inherit; outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .field-input:focus { border-color: var(--accent-border); box-shadow: 0 0 0 3px rgba(200,255,0,0.07); }
+  .field-input::placeholder { color: var(--text-dim); }
+  .field-area {
+    width: 100%; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 14px 16px;
+    color: var(--text); font-size: 14px; font-family: inherit; outline: none; resize: none; height: 80px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .field-area:focus { border-color: var(--accent-border); box-shadow: 0 0 0 3px rgba(200,255,0,0.07); }
+  .field-area::placeholder { color: var(--text-dim); }
+
+  .dt-row { display: flex; gap: 10px; margin-bottom: 16px; }
+  .dt-btn {
+    flex: 1; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 13px 14px;
+    display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s;
+  }
+  .dt-btn:hover { border-color: rgba(255,255,255,0.12); background: var(--surface-3); }
+  .dt-icon { color: var(--accent); }
+  .dt-lbl { font-size: 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .dt-val { font-size: 13px; font-weight: 600; color: var(--text); margin-top: 2px; }
+
+  .prio-row { display: flex; gap: 8px; margin-bottom: 16px; }
+  .prio-btn {
+    flex: 1; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 11px 6px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    cursor: pointer; transition: all 0.2s; color: var(--text-muted);
+  }
+  .prio-btn .pdot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+  .prio-btn .plbl { font-size: 11px; font-weight: 700; }
+  .prio-btn.active.lo { background: var(--prio-low-bg); color: var(--prio-low); border-color: var(--prio-low-border); box-shadow: 0 0 18px rgba(48,209,88,0.12); }
+  .prio-btn.active.me { background: var(--prio-med-bg); color: var(--prio-med); border-color: var(--prio-med-border); box-shadow: 0 0 18px rgba(255,159,10,0.12); }
+  .prio-btn.active.hi { background: var(--prio-high-bg); color: var(--prio-high); border-color: var(--prio-high-border); box-shadow: 0 0 18px rgba(255,69,58,0.12); }
+
+  .tag-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .tchip {
+    padding: 7px 15px; border-radius: 20px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    font-size: 12px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.2s;
+  }
+  .tchip.active { border-color: var(--accent-border); color: var(--accent); background: var(--accent-dim); box-shadow: 0 0 14px rgba(200,255,0,0.08); }
+
+  .subadd { display: flex; align-items: center; gap: 10px; padding: 10px 0; cursor: pointer; }
+  .subadd-icon {
+    width: 26px; height: 26px; border-radius: 8px;
+    border: 1.5px dashed rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.2s;
+  }
+  .subadd span { font-size: 13px; font-weight: 600; color: var(--text-muted); transition: color 0.2s; }
+  .subadd:hover span, .subadd:active span { color: var(--accent); }
+  .subadd:hover .subadd-icon, .subadd:active .subadd-icon { border-color: var(--accent-border); }
+
+  /* ---- DETAIL ---- */
+  .detail-head {
     padding: 12px 16px 16px; display: flex; align-items: center; gap: 12px;
     position: sticky; top: 0; z-index: 10;
-    background: rgba(0,0,0,0.6); backdrop-filter: blur(20px);
+    background: rgba(5,5,8,0.85); backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(255,255,255,0.05);
   }
   .back-btn {
     width: 36px; height: 36px; border-radius: var(--radius-sm);
-    background: var(--glass-bg); backdrop-filter: blur(16px);
-    border: 1px solid var(--glass-border);
-    display: flex; align-items: center; justify-content: center; cursor: pointer;
-    transition: all 0.2s;
+    background: var(--surface-2); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;
   }
-  .back-btn:hover { background: rgba(40,40,45,0.9); }
-  .back-btn:active { transform: scale(0.92); }
-  .detail-label { font-size: 13px; color: var(--text-dim); font-weight: 600; }
-  .detail-body { padding: 16px 20px 100px; flex: 1; overflow-y: auto; }
+  .back-btn:hover { background: var(--surface-3); }
+  .back-btn:active { transform: scale(0.9); }
+  .detail-lbl { font-size: 13px; color: var(--text-muted); font-weight: 600; }
+  .detail-body { padding: 16px 20px 110px; flex: 1; overflow-y: auto; }
 
-  /* Priority selector */
-  .priority-sel { display: flex; gap: 8px; margin-bottom: 16px; }
-  .p-chip {
+  .prio-sel { display: flex; gap: 8px; margin-bottom: 16px; }
+  .pc {
     flex: 1; padding: 10px 8px; border-radius: 12px;
-    background: var(--glass-bg); backdrop-filter: blur(16px);
-    border: 1px solid var(--glass-border);
+    background: var(--surface-2); border: 1px solid var(--border);
     font-size: 12px; font-weight: 700; text-align: center; cursor: pointer;
-    color: var(--text-dim); transition: all 0.2s;
+    color: var(--text-muted); transition: all 0.2s;
   }
-  .p-chip.active.low { background: rgba(34,197,94,0.15); color: var(--priority-low); border-color: rgba(34,197,94,0.4); box-shadow: 0 0 16px rgba(34,197,94,0.15); }
-  .p-chip.active.med { background: rgba(245,158,11,0.15); color: var(--priority-med); border-color: rgba(245,158,11,0.4); box-shadow: 0 0 16px rgba(245,158,11,0.15); }
-  .p-chip.active.high { background: rgba(239,68,68,0.15); color: var(--priority-high); border-color: rgba(239,68,68,0.4); box-shadow: 0 0 16px rgba(239,68,68,0.15); }
+  .pc.active.lo { background: var(--prio-low-bg); color: var(--prio-low); border-color: var(--prio-low-border); }
+  .pc.active.me { background: var(--prio-med-bg); color: var(--prio-med); border-color: var(--prio-med-border); }
+  .pc.active.hi { background: var(--prio-high-bg); color: var(--prio-high); border-color: var(--prio-high-border); }
 
   .detail-title-input {
     width: 100%; background: none; border: none; outline: none;
@@ -306,23 +420,19 @@
   }
   .detail-title-input:focus { color: var(--accent); }
 
-  /* Info card — glass */
-  .info-card {
-    background: var(--glass-bg); backdrop-filter: blur(24px);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius); overflow: hidden; margin-bottom: 10px;
-  }
+  /* Info card */
+  .info-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 10px; }
   .info-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; }
   .info-row + .info-row { border-top: 1px solid rgba(255,255,255,0.04); }
-  .info-lbl { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); font-weight: 600; }
+  .info-lbl { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); font-weight: 600; }
   .info-val { font-size: 14px; font-weight: 600; color: var(--text); }
   .info-val.accent { color: var(--accent); }
-  .info-val.warning { color: var(--priority-med); }
+  .info-val.warn { color: var(--prio-med); }
 
   /* Subtasks */
-  .sub-header { display: flex; justify-content: space-between; align-items: center; margin: 16px 0 10px; }
-  .sub-title { font-size: 15px; font-weight: 700; }
-  .sub-count { font-size: 11px; color: var(--text-dim); font-weight: 600; }
+  .sub-hdr { display: flex; justify-content: space-between; align-items: center; margin: 16px 0 10px; }
+  .sub-ttl { font-size: 15px; font-weight: 700; }
+  .sub-n { font-size: 11px; color: var(--text-muted); font-weight: 600; }
   .sub-item {
     display: flex; align-items: center; gap: 12px;
     padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer;
@@ -330,168 +440,53 @@
   .sub-item:last-child { border-bottom: none; }
   .sub-item:active { opacity: 0.7; }
   .sub-check {
-    width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid rgba(255,255,255,0.12);
+    width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid rgba(255,255,255,0.1);
     flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
     background: rgba(255,255,255,0.04);
   }
-  .sub-item.done .sub-check { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 12px rgba(200,255,0,0.35); }
-  .sub-item.done .sub-check::after { content: ''; width: 5px; height: 3.5px; border: 2px solid #000; border-top: none; border-right: none; transform: rotate(-45deg); margin-bottom: 2px; display: block; }
-  .sub-item.done .sub-text { text-decoration: line-through; color: var(--text-dim); }
+  .sub-item.done .sub-check { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 12px rgba(200,255,0,0.3); }
+  .sub-item.done .sub-check::after { content: ''; width: 5px; height: 3.5px; border: 2px solid #050508; border-top: none; border-right: none; transform: rotate(-45deg); margin-bottom: 2px; display: block; }
+  .sub-item.done .sub-text { text-decoration: line-through; color: var(--text-muted); }
   .sub-text { font-size: 14px; font-weight: 500; color: var(--text); flex: 1; }
 
-  /* Notes */
-  .notes-card {
-    background: var(--glass-bg); backdrop-filter: blur(24px);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius); padding: 14px 16px; margin-top: 16px;
-  }
-  .notes-lbl { font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
-  .notes-txt { font-size: 13px; color: var(--text-muted); line-height: 1.65; }
+  .notes-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-top: 16px; }
+  .notes-lbl { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 8px; }
+  .notes-txt { font-size: 13px; color: var(--text-secondary); line-height: 1.65; }
 
   /* Save bar */
   .save-bar {
     position: absolute; bottom: 0; left: 0; right: 0;
-    padding: 16px 20px 32px;
-    background: linear-gradient(transparent, rgba(0,0,0,0.92));
+    padding: 16px 20px calc(16px + var(--safe-bottom));
+    background: linear-gradient(transparent, rgba(5,5,8,0.95));
     z-index: 15;
   }
   .save-btn {
-    width: 100%; height: 52px;
+    width: 100%; height: 54px;
     background: var(--accent); border-radius: var(--radius);
     display: flex; align-items: center; justify-content: center;
-    font-size: 16px; font-weight: 700; color: #000; cursor: pointer;
-    box-shadow: 0 8px 28px rgba(200,255,0,0.25);
+    font-size: 16px; font-weight: 700; color: #050508; cursor: pointer;
+    box-shadow: 0 8px 28px rgba(200,255,0,0.22);
     transition: all 0.22s ease;
   }
   .save-btn:active { transform: scale(0.97); }
 
-  /* ---- CREATE SHEET — FROSTED GLASS MODAL ---- */
-  .sheet-overlay {
-    position: absolute; inset: 0; z-index: 30;
-    background: rgba(0,0,0,0.5);
-    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
-  }
-  .sheet-overlay.active { opacity: 1; pointer-events: auto; }
-
-  .sheet {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    background: rgba(18,18,20,0.92);
-    backdrop-filter: blur(32px) saturate(180%); -webkit-backdrop-filter: blur(32px) saturate(180%);
-    border-top: 1px solid rgba(255,255,255,0.08);
-    border-radius: 28px 28px 0 0;
-    z-index: 31;
-    transform: translateY(110%); transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
-    max-height: 88%;
-  }
-  .sheet.active { transform: translateY(0); }
-  .sheet-handle {
-    width: 36px; height: 4px; background: rgba(255,255,255,0.15);
-    border-radius: 2px; margin: 14px auto 0;
-  }
-  .sheet-header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 16px 20px 14px; border-bottom: 1px solid rgba(255,255,255,0.04);
-  }
-  .sheet-title { font-size: 17px; font-weight: 700; }
-  .sheet-close { font-size: 15px; font-weight: 600; color: var(--text-dim); cursor: pointer; padding: 4px 8px; transition: color 0.2s; }
-  .sheet-close:hover { color: var(--text); }
-  .sheet-add {
-    background: var(--accent); color: #000;
-    font-size: 13px; font-weight: 700; padding: 7px 16px; border-radius: 10px; cursor: pointer;
-    box-shadow: 0 4px 16px rgba(200,255,0,0.25); transition: all 0.2s;
-  }
-  .sheet-add:hover { box-shadow: 0 6px 20px rgba(200,255,0,0.35); }
-  .sheet-body { padding: 16px 20px 48px; overflow-y: auto; }
-
-  /* Fields */
-  .field { margin-bottom: 16px; }
-  .field-lbl { font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
-  .field-input {
-    width: 100%;
-    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
-    border-radius: var(--radius-sm); padding: 13px 16px;
-    color: var(--text); font-size: 15px; font-weight: 500; font-family: inherit; outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  .field-input:focus { border-color: rgba(200,255,0,0.35); box-shadow: 0 0 0 3px rgba(200,255,0,0.08); }
-  .field-input::placeholder { color: var(--text-dim); }
-  .field-area {
-    width: 100%;
-    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
-    border-radius: var(--radius-sm); padding: 13px 16px;
-    color: var(--text); font-size: 14px; font-family: inherit; outline: none; resize: none; height: 72px;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  .field-area:focus { border-color: rgba(200,255,0,0.35); box-shadow: 0 0 0 3px rgba(200,255,0,0.08); }
-  .field-area::placeholder { color: var(--text-dim); }
-
-  /* Date/time row */
-  .dt-row { display: flex; gap: 10px; margin-bottom: 16px; }
-  .dt-btn {
-    flex: 1;
-    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
-    border-radius: var(--radius-sm); padding: 12px 14px;
-    display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s;
-  }
-  .dt-btn:hover { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); }
-  .dt-icon { color: var(--accent); flex-shrink: 0; }
-  .dt-lbl { font-size: 10px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-  .dt-val { font-size: 13px; font-weight: 600; color: var(--text); margin-top: 2px; }
-
-  /* Priority row */
-  .p-row { display: flex; gap: 8px; margin-bottom: 16px; }
-  .p-btn {
-    flex: 1;
-    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 12px; padding: 11px 8px;
-    display: flex; flex-direction: column; align-items: center; gap: 7px;
-    cursor: pointer; transition: all 0.2s; color: var(--text-dim);
-  }
-  .p-btn .p-dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; transition: box-shadow 0.2s; }
-  .p-btn .p-lbl { font-size: 11px; font-weight: 700; }
-  .p-btn.active.low { background: rgba(34,197,94,0.12); color: var(--priority-low); border-color: rgba(34,197,94,0.35); box-shadow: 0 0 20px rgba(34,197,94,0.12); }
-  .p-btn.active.med { background: rgba(245,158,11,0.12); color: var(--priority-med); border-color: rgba(245,158,11,0.35); box-shadow: 0 0 20px rgba(245,158,11,0.12); }
-  .p-btn.active.high { background: rgba(239,68,68,0.12); color: var(--priority-high); border-color: rgba(239,68,68,0.35); box-shadow: 0 0 20px rgba(239,68,68,0.12); }
-  .p-btn.active .p-dot { box-shadow: 0 0 8px currentColor; }
-
-  /* Tag chips */
-  .tag-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-  .tag-chip {
-    padding: 7px 14px; border-radius: 20px;
-    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
-    font-size: 12px; font-weight: 600; color: var(--text-dim); cursor: pointer; transition: all 0.2s;
-  }
-  .tag-chip.active { border-color: rgba(200,255,0,0.35); color: var(--accent); background: var(--accent-dim); box-shadow: 0 0 14px rgba(200,255,0,0.1); }
-
-  /* Sub add */
-  .sub-add { display: flex; align-items: center; gap: 10px; padding: 12px 0; cursor: pointer; }
-  .sub-add-icon {
-    width: 26px; height: 26px; border-radius: 7px;
-    border: 1.5px dashed rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s;
-  }
-  .sub-add span { font-size: 13px; font-weight: 600; color: var(--text-dim); transition: color 0.2s; }
-  .sub-add:hover span, .sub-add:active span { color: var(--accent); }
-  .sub-add:hover .sub-add-icon, .sub-add:active .sub-add-icon { border-color: rgba(200,255,0,0.4); }
-
-  /* ---- STUB SCREENS ---- */
-  .stub-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 16px; opacity: 0.25; }
+  /* ---- STUB ---- */
+  .stub { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 14px; opacity: 0.2; }
   .stub-title { font-size: 22px; font-weight: 800; }
-  .stub-sub { font-size: 13px; color: var(--text-dim); }
+  .stub-sub { font-size: 13px; color: var(--text-muted); }
 
   /* ---- TOAST ---- */
   .toast {
-    position: fixed; top: 64px; left: 50%; transform: translateX(-50%) translateY(-8px);
-    background: rgba(24,24,27,0.95); backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
+    position: fixed; top: 64px; left: 50%; transform: translateX(-50%) translateY(-10px);
+    background: rgba(16,16,20,0.97); backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
     color: var(--text); padding: 10px 22px; border-radius: 12px;
-    font-size: 13px; font-weight: 600; z-index: 100;
+    font-size: 13px; font-weight: 600; z-index: 200;
     opacity: 0; transition: all 0.3s ease; pointer-events: none; white-space: nowrap;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  .toast.accent { border-color: rgba(200,255,0,0.3); color: var(--accent); }
+  .toast.accent { border-color: var(--accent-border); color: var(--accent); }
 </style>
 </head>
 <body>
@@ -499,17 +494,9 @@
 <div class="wallpaper"></div>
 <div class="app">
 
-  <!-- ===== HOME ===== -->
+  <!-- HOME -->
   <div class="screen active" id="screen-home">
-    <div class="status-bar">
-      <span>9:41</span>
-      <div class="status-icons">
-        <svg width="16" height="12" viewBox="0 0 18 12" fill="currentColor"><path d="M1 4.5C1 3.67 1.67 3 2.5 3h13c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5h-13A1.5 1.5 0 0 1 1 9.5v-5Z"/></svg>
-        <svg width="14" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 2.5C5.5 2.5 3.4 3.9 2.3 6H1c.8 0 1.5.7 1.5 1.5v2C2.5 10.3 3.2 11 4 11h8c.8 0 1.5-.7 1.5-1.5v-2C13.5 3.7 12.8 3 12 3h-1.3C10.6 3.9 8.5 2.5 6 2.5Z"/></svg>
-        <svg width="22" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor" fill="none"/><rect x="2" y="2" width="17" height="8" rx="1.5" fill="currentColor" opacity="0.3"/><rect x="21" y="3.5" width="2.5" height="5" rx="1" fill="currentColor"/></svg>
-      </div>
-    </div>
-
+    <div class="status-bar"><span>9:41</span></div>
     <div class="home-scroll">
       <div class="user-row">
         <div>
@@ -519,10 +506,7 @@
         <div class="avatar">JA</div>
       </div>
 
-      <div class="date-pill">
-        <div class="dot"></div>
-        Today, May 1 · 12 tasks remaining
-      </div>
+      <div class="date-pill"><div class="pulse-dot"></div>Today, May 1 · 12 tasks remaining</div>
 
       <div class="stats-row">
         <div class="stat-card green">
@@ -545,7 +529,7 @@
           <div class="progress-pct">58%</div>
         </div>
         <div class="progress-track">
-          <div class="progress-fill" id="progress-bar" style="width: 58%"></div>
+          <div class="progress-fill" id="prog-bar" style="width: 58%"></div>
         </div>
       </div>
 
@@ -555,42 +539,42 @@
       </div>
 
       <div class="task-list" id="task-list">
-        <div class="task-card high" data-id="1" onclick="openDetail(1)">
-          <div class="task-check" onclick="event.stopPropagation(); toggleDone(this)"></div>
+        <div class="task-card high-prio" onclick="openDetail(1)">
+          <div class="check" onclick="event.stopPropagation(); toggleDone(this)"></div>
           <div class="task-body">
             <div class="task-title">Finalize Q2 investor deck</div>
             <div class="task-meta">
-              <div class="pdot high"></div>
+              <div class="pdot hi"></div>
               <div class="task-time">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 2:00 PM
               </div>
-              <div class="task-tag urgent">Urgent</div>
+              <div class="tag urgent">Urgent</div>
             </div>
           </div>
         </div>
 
-        <div class="task-card med" data-id="2" onclick="openDetail(2)">
-          <div class="task-check" onclick="event.stopPropagation(); toggleDone(this)"></div>
+        <div class="task-card med-prio" onclick="openDetail(2)">
+          <div class="check" onclick="event.stopPropagation(); toggleDone(this)"></div>
           <div class="task-body">
             <div class="task-title">Review Notionalize onboarding flow</div>
             <div class="task-meta">
-              <div class="pdot med"></div>
+              <div class="pdot me"></div>
               <div class="task-time">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 5:00 PM
               </div>
-              <div class="task-tag work">Work</div>
+              <div class="tag work">Work</div>
             </div>
           </div>
         </div>
 
-        <div class="task-card low" data-id="3" onclick="openDetail(3)">
-          <div class="task-check" onclick="event.stopPropagation(); toggleDone(this)"></div>
+        <div class="task-card low-prio" onclick="openDetail(3)">
+          <div class="check" onclick="event.stopPropagation(); toggleDone(this)"></div>
           <div class="task-body">
             <div class="task-title">Reply to Kiannah's message</div>
             <div class="task-meta">
-              <div class="pdot low"></div>
+              <div class="pdot lo"></div>
               <div class="task-time">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 11:00 AM
@@ -599,39 +583,40 @@
           </div>
         </div>
 
-        <div class="task-card med" data-id="4" onclick="openDetail(4)">
-          <div class="task-check" onclick="event.stopPropagation(); toggleDone(this)"></div>
+        <div class="task-card med-prio" onclick="openDetail(4)">
+          <div class="check" onclick="event.stopPropagation(); toggleDone(this)"></div>
           <div class="task-body">
             <div class="task-title">Sync with BrandingU team</div>
             <div class="task-meta">
-              <div class="pdot med"></div>
+              <div class="pdot me"></div>
               <div class="task-time">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 Tomorrow
               </div>
-              <div class="task-tag work">Work</div>
+              <div class="tag work">Work</div>
             </div>
           </div>
         </div>
 
-        <div class="task-card low" data-id="5" onclick="openDetail(5)">
-          <div class="task-check" onclick="event.stopPropagation(); toggleDone(this)"></div>
+        <div class="task-card low-prio" onclick="openDetail(5)">
+          <div class="check" onclick="event.stopPropagation(); toggleDone(this)"></div>
           <div class="task-body">
             <div class="task-title">Gym session</div>
             <div class="task-meta">
-              <div class="pdot low"></div>
+              <div class="pdot lo"></div>
               <div class="task-time">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 6:00 PM
               </div>
+              <div class="tag personal">Personal</div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="fab" onclick="openCreate()">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <div class="fab" onclick="openSheet()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#050508" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     </div>
 
     <div class="bottom-nav">
@@ -639,7 +624,7 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
         <span>Home</span>
       </div>
-      <div class="nav-btn" onclick="switchTab('calendar')">
+      <div class="nav-btn" onclick="switchTab('cal')">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         <span>Calendar</span>
       </div>
@@ -654,30 +639,21 @@
     </div>
   </div>
 
-  <!-- ===== DETAIL ===== -->
+  <!-- DETAIL -->
   <div class="screen" id="screen-detail">
-    <div class="status-bar">
-      <span>9:41</span>
-      <div class="status-icons">
-        <svg width="16" height="12" viewBox="0 0 18 12" fill="currentColor"><path d="M1 4.5C1 3.67 1.67 3 2.5 3h13c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5h-13A1.5 1.5 0 0 1 1 9.5v-5Z"/></svg>
-        <svg width="22" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor" fill="none"/><rect x="2" y="2" width="17" height="8" rx="1.5" fill="currentColor" opacity="0.3"/><rect x="21" y="3.5" width="2.5" height="5" rx="1" fill="currentColor"/></svg>
-      </div>
-    </div>
-
-    <div class="detail-header">
+    <div class="status-bar"><span>9:41</span></div>
+    <div class="detail-head">
       <div class="back-btn" onclick="goBack()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
       </div>
-      <div class="detail-label">Task Details</div>
+      <div class="detail-lbl">Task Details</div>
     </div>
-
     <div class="detail-body">
-      <div class="priority-sel" id="detail-priority">
-        <div class="p-chip" onclick="selPriority(this,'low')">Low</div>
-        <div class="p-chip" onclick="selPriority(this,'med')">Medium</div>
-        <div class="p-chip active high" onclick="selPriority(this,'high')">High</div>
+      <div class="prio-sel" id="detail-prio">
+        <div class="pc" onclick="selPrio(this,'lo')">Low</div>
+        <div class="pc" onclick="selPrio(this,'me')">Medium</div>
+        <div class="pc active hi" onclick="selPrio(this,'hi')">High</div>
       </div>
-
       <textarea class="detail-title-input" id="detail-title" rows="2">Finalize Q2 investor deck</textarea>
 
       <div class="info-card">
@@ -707,13 +683,13 @@
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
             Priority
           </div>
-          <div class="info-val warning">High</div>
+          <div class="info-val warn">High</div>
         </div>
       </div>
 
-      <div class="sub-header">
-        <div class="sub-title">Subtasks</div>
-        <div class="sub-count" id="sub-count">2 of 4 done</div>
+      <div class="sub-hdr">
+        <div class="sub-ttl">Subtasks</div>
+        <div class="sub-n" id="sub-n">2 of 4 done</div>
       </div>
       <div class="info-card">
         <div class="sub-item done" onclick="toggleSub(this)">
@@ -740,25 +716,71 @@
       </div>
     </div>
 
-    <div class="save-bar">
-      <div class="save-btn" onclick="saveDetail()">Save Changes</div>
-    </div>
+    <div class="save-bar"><div class="save-btn" onclick="saveDetail()">Save Changes</div></div>
 
     <div class="bottom-nav">
       <div class="nav-btn" onclick="switchTab('home')"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg><span>Home</span></div>
-      <div class="nav-btn" onclick="switchTab('calendar')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Calendar</span></div>
+      <div class="nav-btn" onclick="switchTab('cal')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Calendar</span></div>
       <div class="nav-btn" onclick="switchTab('focus')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Focus</span></div>
       <div class="nav-btn" onclick="switchTab('profile')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></div>
     </div>
   </div>
 
-  <!-- ===== CREATE SHEET ===== -->
-  <div class="sheet-overlay" id="sheet-overlay" onclick="closeCreate()"></div>
-  <div class="sheet" id="sheet-create">
+  <!-- CALENDAR STUB -->
+  <div class="screen" id="screen-cal">
+    <div class="status-bar"><span>9:41</span></div>
+    <div class="stub">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <div class="stub-title">Calendar</div>
+      <div class="stub-sub">Back to Home</div>
+    </div>
+    <div class="bottom-nav">
+      <div class="nav-btn" onclick="switchTab('home')"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg><span>Home</span></div>
+      <div class="nav-btn active" onclick="switchTab('cal')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Calendar</span></div>
+      <div class="nav-btn" onclick="switchTab('focus')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Focus</span></div>
+      <div class="nav-btn" onclick="switchTab('profile')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></div>
+    </div>
+  </div>
+
+  <!-- FOCUS STUB -->
+  <div class="screen" id="screen-focus">
+    <div class="status-bar"><span>9:41</span></div>
+    <div class="stub">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <div class="stub-title">Focus Mode</div>
+      <div class="stub-sub">Back to Home</div>
+    </div>
+    <div class="bottom-nav">
+      <div class="nav-btn" onclick="switchTab('home')"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg><span>Home</span></div>
+      <div class="nav-btn" onclick="switchTab('cal')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Calendar</span></div>
+      <div class="nav-btn active" onclick="switchTab('focus')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Focus</span></div>
+      <div class="nav-btn" onclick="switchTab('profile')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></div>
+    </div>
+  </div>
+
+  <!-- PROFILE STUB -->
+  <div class="screen" id="screen-profile">
+    <div class="status-bar"><span>9:41</span></div>
+    <div class="stub">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <div class="stub-title">Profile</div>
+      <div class="stub-sub">Back to Home</div>
+    </div>
+    <div class="bottom-nav">
+      <div class="nav-btn" onclick="switchTab('home')"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg><span>Home</span></div>
+      <div class="nav-btn" onclick="switchTab('cal')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Calendar</span></div>
+      <div class="nav-btn" onclick="switchTab('focus')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Focus</span></div>
+      <div class="nav-btn active" onclick="switchTab('profile')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></div>
+    </div>
+  </div>
+
+  <!-- CREATE SHEET -->
+  <div class="sheet-bg" id="sheet-bg" onclick="closeSheet()"></div>
+  <div class="sheet" id="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-header">
-      <div class="sheet-close" onclick="closeCreate()">Cancel</div>
-      <div class="sheet-title">New Task</div>
+    <div class="sheet-head">
+      <div class="sheet-x" onclick="closeSheet()">Cancel</div>
+      <div class="sheet-ttl">New Task</div>
       <div class="sheet-add" onclick="createTask()">Add</div>
     </div>
     <div class="sheet-body">
@@ -785,23 +807,23 @@
       </div>
       <div class="field">
         <div class="field-lbl">Priority</div>
-        <div class="p-row">
-          <div class="p-btn low" onclick="selCreateP(this,'low')"><div class="p-dot"></div><div class="p-lbl">Low</div></div>
-          <div class="p-btn med" onclick="selCreateP(this,'med')"><div class="p-dot"></div><div class="p-lbl">Medium</div></div>
-          <div class="p-btn high active" onclick="selCreateP(this,'high')"><div class="p-dot"></div><div class="p-lbl">High</div></div>
+        <div class="prio-row">
+          <div class="prio-btn lo" onclick="selCreatePrio(this,'lo')"><div class="pdot" style="background:currentColor"></div><div class="plbl">Low</div></div>
+          <div class="prio-btn me" onclick="selCreatePrio(this,'me')"><div class="pdot" style="background:currentColor"></div><div class="plbl">Medium</div></div>
+          <div class="prio-btn hi active" onclick="selCreatePrio(this,'hi')"><div class="pdot" style="background:currentColor"></div><div class="plbl">High</div></div>
         </div>
       </div>
       <div class="field">
         <div class="field-lbl">List</div>
         <div class="tag-row">
-          <div class="tag-chip" onclick="selTag(this)">Personal</div>
-          <div class="tag-chip active" onclick="selTag(this)">Work</div>
-          <div class="tag-chip" onclick="selTag(this)">Design</div>
-          <div class="tag-chip" onclick="selTag(this)">Finance</div>
+          <div class="tchip" onclick="selTchip(this)">Personal</div>
+          <div class="tchip active" onclick="selTchip(this)">Work</div>
+          <div class="tchip" onclick="selTchip(this)">Design</div>
+          <div class="tchip" onclick="selTchip(this)">Finance</div>
         </div>
       </div>
-      <div class="sub-add" onclick="showToast('Subtasks coming soon!')">
-        <div class="sub-add-icon">
+      <div class="subadd" onclick="showToast('Subtasks coming soon!')">
+        <div class="subadd-icon">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </div>
         <span>Add subtask</span>
@@ -809,68 +831,22 @@
     </div>
   </div>
 
-  <!-- ===== STUB SCREENS ===== -->
-  <div class="screen" id="screen-calendar">
-    <div class="status-bar"><span>9:41</span><div class="status-icons"><svg width="16" height="12" viewBox="0 0 18 12" fill="currentColor"><path d="M1 4.5C1 3.67 1.67 3 2.5 3h13c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5h-13A1.5 1.5 0 0 1 1 9.5v-5Z"/></svg><svg width="22" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor" fill="none"/><rect x="2" y="2" width="17" height="8" rx="1.5" fill="currentColor" opacity="0.3"/><rect x="21" y="3.5" width="2.5" height="5" rx="1" fill="currentColor"/></svg></div></div>
-    <div class="stub-screen">
-      <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      <div class="stub-title">Calendar</div>
-      <div class="stub-sub">Go back to Home</div>
-    </div>
-    <div class="bottom-nav">
-      <div class="nav-btn" onclick="switchTab('home')"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg><span>Home</span></div>
-      <div class="nav-btn active" onclick="switchTab('calendar')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Calendar</span></div>
-      <div class="nav-btn" onclick="switchTab('focus')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Focus</span></div>
-      <div class="nav-btn" onclick="switchTab('profile')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></div>
-    </div>
-  </div>
-
-  <div class="screen" id="screen-focus">
-    <div class="status-bar"><span>9:41</span><div class="status-icons"><svg width="16" height="12" viewBox="0 0 18 12" fill="currentColor"><path d="M1 4.5C1 3.67 1.67 3 2.5 3h13c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5h-13A1.5 1.5 0 0 1 1 9.5v-5Z"/></svg><svg width="22" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor" fill="none"/><rect x="2" y="2" width="17" height="8" rx="1.5" fill="currentColor" opacity="0.3"/><rect x="21" y="3.5" width="2.5" height="5" rx="1" fill="currentColor"/></svg></div></div>
-    <div class="stub-screen">
-      <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      <div class="stub-title">Focus Mode</div>
-      <div class="stub-sub">Go back to Home</div>
-    </div>
-    <div class="bottom-nav">
-      <div class="nav-btn" onclick="switchTab('home')"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg><span>Home</span></div>
-      <div class="nav-btn" onclick="switchTab('calendar')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Calendar</span></div>
-      <div class="nav-btn active" onclick="switchTab('focus')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Focus</span></div>
-      <div class="nav-btn" onclick="switchTab('profile')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></div>
-    </div>
-  </div>
-
-  <div class="screen" id="screen-profile">
-    <div class="status-bar"><span>9:41</span><div class="status-icons"><svg width="16" height="12" viewBox="0 0 18 12" fill="currentColor"><path d="M1 4.5C1 3.67 1.67 3 2.5 3h13c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5h-13A1.5 1.5 0 0 1 1 9.5v-5Z"/></svg><svg width="22" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor" fill="none"/><rect x="2" y="2" width="17" height="8" rx="1.5" fill="currentColor" opacity="0.3"/><rect x="21" y="3.5" width="2.5" height="5" rx="1" fill="currentColor"/></svg></div></div>
-    <div class="stub-screen">
-      <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      <div class="stub-title">Profile</div>
-      <div class="stub-sub">Go back to Home</div>
-    </div>
-    <div class="bottom-nav">
-      <div class="nav-btn" onclick="switchTab('home')"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg><span>Home</span></div>
-      <div class="nav-btn" onclick="switchTab('calendar')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Calendar</span></div>
-      <div class="nav-btn" onclick="switchTab('focus')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Focus</span></div>
-      <div class="nav-btn active" onclick="switchTab('profile')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></div>
-    </div>
-  </div>
-
   <div class="toast" id="toast"></div>
 </div>
 
 <script>
-  // ---- NAV ----
-  let nav = ['home'];
+  // Nav
+  var nav = ['home'];
   function showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    const s = document.getElementById('screen-' + id);
+    document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+    var s = document.getElementById('screen-' + id);
     if (s) s.classList.add('active');
   }
   function updateNav(id) {
-    document.querySelectorAll('.nav-btn').forEach(b => {
+    document.querySelectorAll('.nav-btn').forEach(function(b){
       b.classList.remove('active');
-      const onclick = b.getAttribute('onclick');
-      if (onclick && onclick.includes("'" + id + "'")) b.classList.add('active');
+      var o = b.getAttribute('onclick') || '';
+      if (o.indexOf("'" + id + "'") > -1) b.classList.add('active');
     });
   }
   function switchTab(tab) {
@@ -882,83 +858,86 @@
     nav.push('detail');
     showScreen('detail');
   }
-  function openCreate() {
-    document.getElementById('sheet-overlay').classList.add('active');
-    document.getElementById('sheet-create').classList.add('active');
-  }
-  function closeCreate() {
-    document.getElementById('sheet-overlay').classList.remove('active');
-    document.getElementById('sheet-create').classList.remove('active');
-  }
   function goBack() {
     nav.pop();
-    const top = nav[nav.length - 1] || 'home';
+    var top = nav[nav.length-1] || 'home';
     showScreen(top);
     updateNav(top);
   }
+  function openSheet() {
+    document.getElementById('sheet-bg').classList.add('active');
+    document.getElementById('sheet').classList.add('active');
+  }
+  function closeSheet() {
+    document.getElementById('sheet-bg').classList.remove('active');
+    document.getElementById('sheet').classList.remove('active');
+  }
 
-  // ---- TASKS ----
+  // Tasks
   function toggleDone(el) {
-    const card = el.closest('.task-card');
-    card.classList.toggle('done');
-    if (card.classList.contains('done')) {
+    var card = el.closest('.task-card');
+    card.classList.toggle('done-state');
+    if (card.classList.contains('done-state')) {
       updateProgress();
       showToast('Task completed ✓', 'accent');
     }
   }
   function updateProgress() {
-    const total = document.querySelectorAll('.task-list .task-card').length;
-    const done = document.querySelectorAll('.task-list .task-card.done').length;
-    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-    const bar = document.getElementById('progress-bar');
+    var total = document.querySelectorAll('.task-list .task-card').length;
+    var done = document.querySelectorAll('.task-list .task-card.done-state').length;
+    var pct = total > 0 ? Math.round((done/total)*100) : 0;
+    var bar = document.getElementById('prog-bar');
     if (bar) bar.style.width = pct + '%';
   }
 
-  // ---- DETAIL ----
-  function selPriority(el, level) {
-    el.closest('.priority-sel').querySelectorAll('.p-chip').forEach(c => {
-      c.classList.remove('active', 'low', 'med', 'high');
+  // Detail
+  function selPrio(el, level) {
+    var container = el.closest('.prio-sel');
+    container.querySelectorAll('.pc').forEach(function(c){
+      c.classList.remove('active','lo','me','hi');
     });
     el.classList.add('active', level);
   }
   function toggleSub(el) {
     el.classList.toggle('done');
-    const total = document.querySelectorAll('#screen-detail .sub-item').length;
-    const done = document.querySelectorAll('#screen-detail .sub-item.done').length;
-    document.getElementById('sub-count').textContent = done + ' of ' + total + ' done';
+    var total = document.querySelectorAll('#screen-detail .sub-item').length;
+    var done = document.querySelectorAll('#screen-detail .sub-item.done').length;
+    document.getElementById('sub-n').textContent = done + ' of ' + total + ' done';
   }
   function saveDetail() {
     showToast('Changes saved ✓', 'accent');
-    setTimeout(() => goBack(), 500);
+    setTimeout(function(){ goBack(); }, 500);
   }
 
-  // ---- CREATE ----
-  function selCreateP(el, level) {
-    el.closest('.p-row').querySelectorAll('.p-btn').forEach(b => b.classList.remove('active', 'low', 'med', 'high'));
+  // Create
+  function selCreatePrio(el, level) {
+    el.closest('.prio-row').querySelectorAll('.prio-btn').forEach(function(b){
+      b.classList.remove('active','lo','me','hi');
+    });
     el.classList.add('active', level);
   }
-  function selTag(el) {
-    el.closest('.tag-row').querySelectorAll('.tag-chip').forEach(c => c.classList.remove('active'));
+  function selTchip(el) {
+    el.closest('.tag-row').querySelectorAll('.tchip').forEach(function(c){ c.classList.remove('active'); });
     el.classList.add('active');
   }
   function createTask() {
-    const t = document.getElementById('c-title').value;
-    if (!t.trim()) { showToast('Enter a task name'); return; }
+    var t = document.getElementById('c-title').value;
+    if (!t.replace(/\s/g,'')) { showToast('Enter a task name'); return; }
     showToast('Task created ✓', 'accent');
-    setTimeout(() => {
-      closeCreate();
+    setTimeout(function(){
+      closeSheet();
       nav = ['home'];
       showScreen('home');
       updateNav('home');
     }, 600);
   }
 
-  // ---- TOAST ----
+  // Toast
   function showToast(msg, type) {
-    const t = document.getElementById('toast');
+    var t = document.getElementById('toast');
     t.textContent = msg;
     t.className = 'toast' + (type ? ' ' + type : '') + ' show';
-    setTimeout(() => t.classList.remove('show'), 2000);
+    setTimeout(function(){ t.classList.remove('show'); }, 2000);
   }
 
   updateNav('home');
